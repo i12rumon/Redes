@@ -38,13 +38,13 @@ bool barco::esta(int x, int y) {
 
 bool barco::generado_correctamente(int posX,int posY,int posendX,int posendY,tipo tamanio,orientacion a){
     if(a==0){
-        if(((posX+(int)tamanio)==posendX)){
+        if(((posX+tamanio)==posendX)){
             return true;
         }
         return false;
     }
     else{
-       if((posY+(int)tamanio)==posendY){
+       if((posY+tamanio)==posendY){
             return true;
         }
         return false;
