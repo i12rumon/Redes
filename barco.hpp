@@ -1,18 +1,20 @@
 #include <iostream>
 #include <string>
 enum orientacion{
-    HORIZONTAL,
-    VERTICAL
+    HORIZONTAL = 0,
+    VERTICAL = 1
     };
 enum tipo{
-    PEQUENIO,
-    MEDIANO,
-    GRANDE
+    PEQUENIO = 1,
+    MEDIANO = 2,
+    GRANDE = 3
     };
 class barco{
     private:
     int pos_x;
     int pos_y;
+    int end_x;
+    int end_y;
     orientacion orient;
     tipo type;
     public:
@@ -26,7 +28,7 @@ class barco{
     inline tipo getTipo() const {return type;};
     inline void setOrientacion(orientacion direccion){orient=direccion;};
     inline void setTipo(tipo tamanio){type=tamanio;};
-    
+    bool esta(int x, int y);
     
     
 };
