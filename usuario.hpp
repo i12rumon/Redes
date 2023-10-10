@@ -12,4 +12,4 @@ class usuario{
     inline void setUser(std::string newUser) { user = newUser; }
     inline void setPass(std::string newPass) { pass = newPass; }
     
-}
+};
