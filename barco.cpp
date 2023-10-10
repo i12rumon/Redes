@@ -1,5 +1,6 @@
 #include "barco.hpp"
 
+
 barco::barco(int x,int y,orientacion z,tipo tamanio){
     pos_x=x;
     pos_y=y;
@@ -33,4 +34,19 @@ bool barco::esta(int x, int y) {
     }
 
     return false;
+}
+
+bool barco::generado_correctamente(int posX,int posY,int posendX,int posendY,tipo tamanio,orientacion a){
+    if(a==0){
+        if(((posX+(int)tamanio)==posendX)){
+            return true;
+        }
+        return false;
+    }
+    else{
+       if((posY+(int)tamanio)==posendY){
+            return true;
+        }
+        return false;
+    }
 }

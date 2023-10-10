@@ -29,6 +29,7 @@ class barco{
     inline void setOrientacion(orientacion direccion){orient=direccion;};
     inline void setTipo(tipo tamanio){type=tamanio;};
     bool esta(int x, int y);
+    bool generado_correctamente(int posX,int posY,int posendX,int posendY,tipo tamanio,orientacion a);
     
     
 };
