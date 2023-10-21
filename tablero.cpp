@@ -16,7 +16,6 @@ void Tablero::generar_tablero() {
         int pos_y = rand() % 10;
         barco barco_nuevo = barco(pos_x, pos_y, side, tipos_barco[i]);
         barcos_tablero.push_back(barco_nuevo);
-        std::cout << "generando barco" << std::endl;
     }
 }
 
