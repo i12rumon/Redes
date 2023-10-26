@@ -19,10 +19,6 @@ void commandHandler(char* string, int socket, std::vector<usuario> &usuarios) {
         if (it->getSocket() == socket) {
             user = std::__to_address(it);
             break;
-        } else {
-            usuarios.push_back(usuario(socket));
-            user = std::__to_address(usuarios.end());
-            std::cout << "[FUNCIONES_SRV] Usuario nuevo añadido." << std::endl;
         }
     }
 
@@ -44,6 +40,7 @@ void commandHandler(char* string, int socket, std::vector<usuario> &usuarios) {
     } else if (strcmp(token, "PASSWORD") == 0) {
         // Ahora estamos sacando la contraseña
         password_str = strtok(NULL, " ");
+        //printf("%s\n", password_str);
         user->setPass(password_str);
 
         if (user->getUser() != "empty" && user->getPass() != "empty") {
@@ -82,13 +79,16 @@ void commandHandler(char* string, int socket, std::vector<usuario> &usuarios) {
     } else if (strcmp(token, "INICIAR-PARTIDA") == 0) {
         // Aqui van las cosas de iniciar la partida y eso, hay que emparejar al jugador con
         // alguien que no este emparejado
+        user->ready(true);
         if (pairUsers(socket, usuarios)) {
-            strcpy(string, "+Ok. Empieza la partida");
-            send(user->getOpponentSocket(), string, sizeof(string), 0); // Le enviamos al oponente que vamos a empezar la partida
+            bzero(string, sizeof(string));
+            sprintf(string, "+Ok. Empieza la partida");
+            std::cout << "[FUNCIONES_SRV] Socket " << user->getSocket() << " emparejado con " << user->getOpponentSocket() << std::endl;
+            send(user->getOpponentSocket(), string, strlen(string), 0); // Le enviamos al oponente que vamos a empezar la partida
         } else {
             // Si no se han encontrado usuarios listos para hacer partida, pues simplemente esperamos a jugadores hasta
             // que haya uno listo que encuentre a este jugador y empareje la partida
-            strcpy(string, "+Ok. Esperando jugadores");
+            sprintf(string, "+Ok. Esperando jugadores");
         }
 
     } else if (strcmp(token, "DISPARO") == 0) {
@@ -118,25 +118,64 @@ bool pairUsers(int socket, std::vector<usuario> &usuarios) {
 
     Devuelve true si se ha realizado el emparejamiento, false en el caso contrario.
     */
-    
-    int opponentSocket = 0;
     bool opponentFound = false;
-    for (usuario oponente : usuarios) {
-        opponentSocket = oponente.getOpponentSocket();
-        if (opponentSocket == -1 && oponente.getValidity() == true && oponente.getSocket() != socket) {
-            oponente.setOpponent(socket);
-            break;
+    int opponentSocket = 0;
+    for (auto it = usuarios.begin(); it != usuarios.end(); it++) {
+        if (it->getSocket() != socket && it->getOpponentSocket() == -1 && it->getValidity() == true && it->readyToFight() == true) {
+            it->ready(false);
+            it->setOpponent(socket);
+            opponentSocket = it->getSocket();
+            opponentFound = true;
         }
     }
 
-    if (opponentFound) {
-        for (usuario user : usuarios) {
-            if (user.getSocket() == socket) {
-                user.setOpponent(opponentSocket);
+    if (opponentFound == true) {
+        for (auto it = usuarios.begin(); it != usuarios.end(); it++) {
+            if (it->getSocket() == socket) {
+                it->ready(false);
+                it->setOpponent(opponentSocket);
                 return true;
             }
         }
     }
 
     return false;
+}
+
+bool removeUser(int socket, std::vector<usuario> &usuarios, char* buffer) {
+    int socketOponente = 0;
+    for (auto it = usuarios.begin(); it != usuarios.end(); it++) {
+        if (it->getSocket() == socket) {
+
+            // Nos guardamos el socket del oponente
+            socketOponente = it->getOpponentSocket();
+
+            // Borramos al usuario del vector
+            usuarios.erase(it);
+            break;
+        }
+    }
+
+    if (socketOponente == -1) {
+        // No tiene a ningun oponente asignado, asi que simplemente adios
+        return true;
+    } else {
+        // Limpiamos el buffer
+        bzero(buffer, sizeof(buffer));
+
+        // Notificamos al oponente
+        strcpy(buffer, "-Err, Oponente desconectado");
+        send(socketOponente, buffer, strlen(buffer), 0);
+    }
+
+    // Ahora vamos a resetear al oponente
+    for (auto it = usuarios.begin(); it != usuarios.end(); it++) {
+        if (it->getSocket() == socketOponente) {
+            // Ponemos como que no tiene oponente
+            it->setOpponent(-1);
+            break;
+        }
+    }
+
+    return true;
 }

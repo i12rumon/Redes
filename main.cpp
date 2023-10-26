@@ -2,10 +2,6 @@
 #include "tablero.hpp"
 #include "funciones_srv.hpp"
 
-
-#define MSG_SIZE 256
-#define MAX_CLIENTS 15
-
 int main() {
     //std::vector<usuario> usuariosConectados;
     std::vector<usuario> usuarios = std::vector<usuario>();
@@ -52,7 +48,6 @@ int main() {
     FD_SET(sd, &readfds);
     FD_SET(0, &readfds);
 
-    int numeroClientes = 0;
     while(1) {
         // Aqui vamos a aceptar peticiones
         auxfds = readfds;
@@ -69,17 +64,17 @@ int main() {
                             perror("Error aceptando peticiones.\n");
                         } else {
                             // Se acaba de conectar un usuario, sorpresaa
-                            if (numeroClientes < MAX_CLIENTS) {
+                            if (usuarios.size() < MAX_CLIENTS) {
                                 usuarios.push_back(usuario(new_sd));
-                                numeroClientes++;
                                 FD_SET(new_sd, &readfds);
                                 bzero(buffer, sizeof(buffer));
                                 sprintf(buffer, "+0k. Usuario conectado");
-                                printf("Nuevo cliente conectado.\n");
+                                printf("[MAIN] Nuevo cliente conectado.\n");
+                                std::cout << "[MAIN] Hay " << usuarios.size() << " usuarios conectados ahora mismo." << std::endl;
                                 send(new_sd, buffer, sizeof(buffer), 0);
                             } else {
                                 bzero(buffer, sizeof(buffer));
-                                sprintf(buffer, "Hay demasiados clientes.\n");
+                                sprintf(buffer, "[MAIN] Hay demasiados clientes.\n");
                                 send(new_sd, buffer, sizeof(buffer), 0);
                                 close(new_sd); // Mandar al cliente a tomar por qlo
                             }
@@ -90,15 +85,26 @@ int main() {
                         // Ahora esto es de un socket externo.
                         bzero(buffer, sizeof(buffer));
                         int recibido = recv(i, buffer, sizeof(buffer), 0);
+                        
+                        // Limpiamos la cadena, sino da errores
                         if (buffer[recibido - 1] == '\n') {
                             buffer[recibido - 1] = '\0';
                         }
+
                         if (recibido > 0) {
                             // Hemos recibido un mensaje del socket i-esimo, vamos a ver que es lo que ha dicho
-                            printf("%s\n", buffer);
+                            printf("[COMMAND] %i -> %s\n", i, buffer);
                             commandHandler(buffer, i, usuarios);
-                            //bzero(buffer, sizeof(buffer));
                             send(i, buffer, sizeof(buffer), 0);
+                        }
+                        
+                        if (recibido == 0) {
+                            // Aqui se esta enviando un control - c, es decir, echar al cliente del server
+                            removeUser(i, usuarios, buffer);
+                            std::cout << "[MAIN] Usuario borrado correctamente." << std::endl;
+                            std::cout << "[MAIN] Ahora mismo hay " << usuarios.size() << " usuarios conectados." << std::endl;
+                            close(i);
+                            FD_CLR(i, &readfds);
                         }
                     }
                 }

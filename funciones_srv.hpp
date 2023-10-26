@@ -11,4 +11,9 @@
 #include <unistd.h>
 #include <vector>
 
+#define MSG_SIZE 256
+#define MAX_CLIENTS 15
+
 void commandHandler(char* string, int socket, std::vector<usuario> &usuarios);
+bool pairUsers(int socket, std::vector<usuario> &usuarios);
+bool removeUser(int socket, std::vector<usuario> &usuarios, char* buffer);
